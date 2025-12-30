@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "Webwonders.TableEditor",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Webwonders.TableEditor.Bundle",
+      "alias": "webwonders.tableeditor.bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/Webwonders-TableEditor/webwonders-tableeditor.js"
+    }
+  ]
+}

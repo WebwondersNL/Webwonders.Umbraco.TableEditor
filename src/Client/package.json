@@ -1,0 +1,17 @@
+{
+  "name": "webwonders-umbraco-table-editor",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build --config src/table-editor/vite.tableeditor.config.js"
+  },
+  "devDependencies": {
+    "@umbraco-cms/backoffice": "^*",
+    "chalk": "^5.6.2",
+    "cross-env": "^10.1.0",
+    "node-fetch": "^3.3.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  }
+}
