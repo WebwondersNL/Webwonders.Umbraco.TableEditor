@@ -68,3 +68,7 @@ _ReSharper*/
 # Rider logs
 .idea_modules/
 .DS_Store
+
+# Ignoring Dev site outputs.
+/dev/umbraco/
+/dev/App_Data/
