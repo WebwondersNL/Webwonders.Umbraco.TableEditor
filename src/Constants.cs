@@ -2,6 +2,6 @@ namespace Webwonders.Umbraco.TableEditor
 {
     public class Constants
     {
-        public const string ApiName = "webwondersumbracotableeditor";
+       public const string SchemaAlias = "Webwonders.TableEditor.PropertyEditorSchema";
     }
 }

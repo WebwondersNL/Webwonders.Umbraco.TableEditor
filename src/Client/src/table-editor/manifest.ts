@@ -2,13 +2,21 @@
     {
         type: "propertyEditorUi",
         alias: "Webwonders.TableEditor.PropertyEditorUi",
-        name: "Icon Picker Property Editor UI",
+        name: "Webwonders Table Editor Property Editor UI",
         element: () => import('./table-editor.element.ts'),
         meta: {
-            label: "Table Editor",
+            label: "Webwonders Table Editor",
             icon: "icon-table",
             group: "common",
             propertyEditorSchemaAlias: "Webwonders.TableEditor.PropertyEditorSchema"
+        },
+    },
+    {
+        type: "propertyEditorSchema",
+        alias: "Webwonders.TableEditor.PropertyEditorSchema",
+        name: "Webwonders Table Editor Schema",
+        meta: {
+            defaultPropertyEditorUiAlias: "Webwonders.TableEditor.PropertyEditorUi",
         },
     }
 ];
