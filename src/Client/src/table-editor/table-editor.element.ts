@@ -44,7 +44,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
     connectedCallback(): void {
         super.connectedCallback();
-        
+
         const v = this.value ?? createEmptyTable();
         if (!v.settings) v.settings = { columnHasHeader: false, rowHasHeader: false, highlightEmptyCells: false };
         if (v.settings.highlightEmptyCells === undefined) v.settings.highlightEmptyCells = false;
@@ -154,6 +154,21 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         const table = this.value ?? createEmptyTable();
 
         return html`
+            
+
+            ${this._isEdit
+                    ? html`
+                        ${this._renderEditControls(table)}
+                        ${this._renderEditTable(table)}
+                    `
+                    : html`${this._renderReadTable(table)}`}
+
+            ${this._renderToolbar()}
+        `;
+    }
+
+    private _renderToolbar() {
+        return html`
             <div class="toolbar">
                 <uui-button
                         look="primary"
@@ -171,131 +186,166 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                         `
                         : null}
             </div>
+        `;
+    }
 
-            ${this._isEdit
-                    ? html`
-                        <div class="toggles">
-                            <uui-toggle ?checked=${table.settings.columnHasHeader} @change=${this._toggleColumnHasHeader}>
-                                First row is header
-                            </uui-toggle>
+    private _renderEditControls(table: TableModel) {
+        return html`
+            <div class="toggles">
+                <uui-toggle ?checked=${table.settings.columnHasHeader} @change=${this._toggleColumnHasHeader}>
+                    First row is header
+                </uui-toggle>
 
-                            <uui-toggle ?checked=${table.settings.rowHasHeader} @change=${this._toggleRowHasHeader}>
-                                First column is header
-                            </uui-toggle>
+                <uui-toggle ?checked=${table.settings.rowHasHeader} @change=${this._toggleRowHasHeader}>
+                    First column is header
+                </uui-toggle>
 
-                            <uui-toggle ?checked=${table.settings.highlightEmptyCells} @change=${this._toggleHighlightEmptyCells}>
-                                Highlight empty cells
-                            </uui-toggle>
-                        </div>
+                <uui-toggle ?checked=${table.settings.highlightEmptyCells} @change=${this._toggleHighlightEmptyCells}>
+                    Highlight empty cells
+                </uui-toggle>
+            </div>
 
-                        <div class="actions">
-                            <uui-button look="secondary" @click=${this._addCol} .disabled=${this.readonly} label="Add column"></uui-button>
-                        </div>
-                    `
-                    : null}
+            <div class="actions">
+                <uui-button
+                        look="secondary"
+                        @click=${this._addCol}
+                        .disabled=${this.readonly}
+                        label="Add column"></uui-button>
+            </div>
+        `;
+    }
 
-            <uui-box>
-            <uui-table class="grid">
-                <!-- Header row -->
-                
+    private _renderReadTable(table: TableModel) {
+        return html`
+            <uui-table class="uuiReadTable">
                 <uui-table-row>
-                    ${this._isEdit ? html`<uui-table-head-cell class="cmd"></uui-table-head-cell>` : null}
-
                     ${table.columns.map(
-                            (c, i) => html`
-                                <uui-table-head-cell>
-                                    ${this._isEdit
-                                            ? html`
-                                                <div class="headCell">
-                                                    <uui-input
-                                                            .value=${c.value}
-                                                            @input=${(e: InputEvent) => this._updateColName(i, (e.target as HTMLInputElement).value)}></uui-input>
-
-                                                    <uui-button
-                                                            look="danger"
-                                                            compact
-                                                            @click=${() => this._removeCol(i)}
-                                                            .disabled=${this.readonly}
-                                                            label="×"></uui-button>
-                                                </div>
-                                            `
-                                            : html`${c.value}`}
+                            (c) => html`
+                                <uui-table-head-cell class=${table.settings.columnHasHeader ? "colHeader" : ""}>
+                                    ${c.value}
                                 </uui-table-head-cell>
                             `
                     )}
                 </uui-table-row>
 
-                <!-- Inline create at top (insert at index 0) -->
-                ${this._isEdit
-                        ? html`
-                            <uui-table-row class="insertRow insertTop">
-                                <uui-table-cell class="insertCell" colspan=${table.columns.length + (this._isEdit ? 1 : 0)}>
-                                    <uui-button-inline-create
-                                            label="Add row"
-                                            .disabled=${this.readonly}
-                                            @click=${() => this._insertRow(0)}></uui-button-inline-create>
-                                </uui-table-cell>
-                            </uui-table-row>
-                        `
-                        : null}
-
-                <!-- Data rows + inline create between rows -->
                 ${table.rows.map(
-                        (r, ri) => html`
+                        (r) => html`
                             <uui-table-row
                                     class=${[r.settings?.isHeaderRow ? "isHeaderRow" : "", r.settings?.isUnderlined ? "isUnderlined" : ""]
                                             .filter(Boolean)
                                             .join(" ")}>
-                                ${this._isEdit
-                                        ? html`
-                                            <uui-table-cell class="cmd">
-                                                <uui-button
-                                                        look="danger"
-                                                        compact
-                                                        @click=${() => this._removeRow(ri)}
-                                                        .disabled=${this.readonly}
-                                                        label="×"></uui-button>
-                                            </uui-table-cell>
-                                        `
-                                        : null}
-
-                                ${r.cells.map(
-                                        (cell, ci) => html`
-                                            <uui-table-cell
-                                                    class=${[
-                                                        table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
-                                                        table.settings.highlightEmptyCells && !cell.value?.trim() ? "empty" : "",
-                                                    ]
-                                                            .filter(Boolean)
-                                                            .join(" ")}>
-                                                ${this._isEdit
-                                                        ? html`
-                                                            <uui-input
-                                                                    .value=${cell.value}
-                                                                    @input=${(e: InputEvent) => this._updateCell(ri, ci, (e.target as HTMLInputElement).value)}></uui-input>
-                                                        `
-                                                        : html`${cell.value}`}
-                                            </uui-table-cell>
-                                        `
-                                )}
+                                ${r.cells.map((cell, ci) => {
+                                    const isEmpty = !cell.value?.trim();
+                                    return html`
+                                        <uui-table-cell
+                                                class=${[
+                                                    table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
+                                                    table.settings.highlightEmptyCells && isEmpty ? "empty" : "",
+                                                ]
+                                                        .filter(Boolean)
+                                                        .join(" ")}>
+                                            ${cell.value}
+                                        </uui-table-cell>
+                                    `;
+                                })}
                             </uui-table-row>
-
-                            ${this._isEdit
-                                    ? html`
-                                        <uui-table-row class="insertRow">
-                                            <uui-table-cell class="insertCell" colspan=${table.columns.length + (this._isEdit ? 1 : 0)}>
-                                                <uui-button-inline-create
-                                                        label="Add row"
-                                                        .disabled=${this.readonly}
-                                                        @click=${() => this._insertRow(ri + 1)}></uui-button-inline-create>
-                                            </uui-table-cell>
-                                        </uui-table-row>
-                                    `
-                                    : null}
                         `
                 )}
             </uui-table>
-            </uui-box>
+        `;
+    }
+
+    private _renderEditTable(table: TableModel) {
+        const colCount = table.columns.length;
+        const templateCols = `repeat(${Math.max(colCount, 1)}, minmax(140px, 1fr))`;
+
+        return html`
+            <div class="gridEditor" style=${`--te-cols:${templateCols};`}>
+                <!-- Header -->
+                <div class="headerLayout">
+                    <div class="gridHeader">
+                        ${table.columns.map((c, ci) => html`
+                            <div class="colHead" data-col="${ci}" style=${`grid-column:${ci + 1};`}>
+                                <uui-input
+                                        .value=${c.value}
+                                        @input=${(e: InputEvent) => this._updateColName(ci, (e.target as HTMLInputElement).value)}></uui-input>
+
+                                <uui-action-bar class="colActions">
+                                    <uui-button
+                                            label="Delete column"
+                                            look="primary"
+                                            @click=${(ev: Event) => { ev.stopPropagation(); this._removeCol(ci); }}>
+                                        <uui-icon name="icon-trash"></uui-icon>
+                                    </uui-button>
+                                </uui-action-bar>
+                            </div>
+                        `)}
+                    </div>
+
+                    <!-- header gutter (empty, just for alignment) -->
+                    <div class="headerGutter" aria-hidden="true"></div>
+                </div>
+
+                <!-- Insert at top -->
+                <div class="insertLine insertTop">
+                    <uui-button-inline-create
+                            label="Add row"
+                            .disabled=${this.readonly}
+                            @click=${() => this._insertRow(0)}></uui-button-inline-create>
+                </div>
+
+                <!-- Rows (with right-hand action gutter) -->
+                ${table.rows.map(
+                        (r, ri) => html`
+                            <div class="rowLayout" data-row=${ri}>
+                                <div class="gridRow">
+                                    ${r.cells.map(
+                                            (cell, ci) => html`
+                    <div
+                      class=${[
+                                                "cell",
+                                                table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
+                                                table.settings.highlightEmptyCells && !cell.value?.trim() ? "empty" : "",
+                                                r.settings?.isHeaderRow ? "isHeaderRow" : "",
+                                                r.settings?.isUnderlined ? "isUnderlined" : "",
+                                            ]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                      style=${`grid-column:${ci + 1};`}
+                      data-col="${ci}">
+                      <uui-input
+                        .value=${cell.value}
+                        @input=${(e: InputEvent) => this._updateCell(ri, ci, (e.target as HTMLInputElement).value)}></uui-input>
+                    </div>
+                  `
+                                    )}
+                                </div>
+
+                                <div class="rowActionsRail">
+                                    <uui-action-bar class="rowActions">
+                                        <uui-button
+                                                label="Delete row"
+                                                look="primary"
+                                                @click=${(ev: Event) => {
+                                                    ev.stopPropagation();
+                                                    this._removeRow(ri);
+                                                }}>
+                                            <uui-icon name="icon-trash"></uui-icon>
+                                        </uui-button>
+                                    </uui-action-bar>
+                                </div>
+                            </div>
+
+                            <!-- Insert between rows (after ri) -->
+                            <div class="insertLine" style=${`--afterRow:${ri};`}>
+                                <uui-button-inline-create
+                                        label="Add row"
+                                        .disabled=${this.readonly}
+                                        @click=${() => this._insertRow(ri + 1)}></uui-button-inline-create>
+                            </div>
+                        `
+                )}
+            </div>
         `;
     }
 
@@ -318,43 +368,157 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         uui-input {
             width: 100%;
         }
-        
-        uui-table-row.insertRow {
+
+        /* Edit surface */
+        .gridEditor {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow: hidden;
+            background: var(--uui-color-surface);
+        }
+
+        .headerLayout {
+            display: grid;
+            grid-template-columns: 1fr 56px;
+            gap: var(--uui-size-2);
+            align-items: center;
+
+            padding: var(--uui-size-6);
+            border-bottom: 1px solid var(--uui-color-border);
+        }
+
+        .gridHeader {
+            display: grid;
+            grid-template-columns: var(--te-cols);
+            gap: var(--uui-size-6);
+            padding: 0;          
+            border-bottom: none; 
+            min-width: 0;
+        }
+
+        .headerGutter {
+            width: 56px;
+        }
+
+        .colHead {
+            position: relative;
+            display: flex;
+            gap: var(--uui-size-2);
+            align-items: center;
+            min-width: 0;
+        }
+
+        .colActions {
+            position: absolute;
+            right: var(--uui-size-2);
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 120ms ease-in-out;
+        }
+
+        .colHead:hover .colActions,
+        .colHead:focus-within .colActions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ---- Row layout with right gutter ---- */
+        .rowLayout {
+            display: grid;
+            grid-template-columns: 1fr 56px; /* gutter width */
+            gap: var(--uui-size-2);
+            align-items: center;
+
+            padding: var(--uui-size-6);
+            border-bottom: 1px solid var(--uui-color-border);
+
+            transition: background-color 120ms ease-in-out;
+        }
+
+        .rowLayout:hover,
+        .rowLayout:focus-within {
+            background-color: var(--uui-color-surface-alt);
+            border-radius: var(--uui-border-radius);
+        }
+
+        .gridRow {
+            display: grid;
+            grid-template-columns: var(--te-cols);
+            gap: var(--uui-size-6);
+            padding: 0; /* padding handled by rowLayout */
+            border-bottom: none; /* border handled by rowLayout */
+            min-width: 0;
+        }
+
+        .rowActionsRail {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .rowActionsRail .rowActions {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 120ms ease-in-out;
+        }
+
+        .rowLayout:hover .rowActionsRail .rowActions,
+        .rowLayout:focus-within .rowActionsRail .rowActions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .cell {
+            min-width: 0;
+        }
+
+        .rowHeader {
+            font-weight: 700;
+            background: var(--uui-color-surface-alt);
+            border-radius: 2px;
+            padding: 2px;
+        }
+
+        .isHeaderRow {
+            font-weight: 700;
+        }
+
+        .isUnderlined {
+            text-decoration: underline;
+        }
+
+        .empty uui-input {
+            outline: 1px dashed var(--uui-color-border);
+            outline-offset: 2px;
+        }
+
+        /* Insert lines (between rows) */
+        .insertLine {
             position: relative;
             height: 0;
         }
-        
-        uui-table-cell.insertCell {
-            position: static;
-            padding: 0;
-            border: 0;
-            height: 0;
-            overflow: visible;
-        }
-        
-        uui-table-row.insertRow uui-button-inline-create {
+
+        .insertLine uui-button-inline-create {
             position: absolute;
             left: 0;
             right: 0;
             top: 0px;
-
-            width: 100%;
-            max-width: 100%;
-
-            z-index: 10;
-
             opacity: 0;
             pointer-events: auto;
-
             transition: opacity 120ms ease-in-out;
+            z-index: 5;
         }
 
-        uui-table-row.insertRow:hover uui-button-inline-create,
-        uui-table-row.insertRow:focus-within uui-button-inline-create {
+        .insertLine:hover uui-button-inline-create,
+        .insertLine:focus-within uui-button-inline-create {
             opacity: 1;
         }
 
-        uui-table-row.insertRow::before {
+        .insertLine::before {
             content: "";
             position: absolute;
             left: 0;
