@@ -18,5 +18,11 @@
         meta: {
             defaultPropertyEditorUiAlias: "Webwonders.TableEditor.PropertyEditorUi",
         },
+    },
+    {
+        type: "modal",
+        alias: "Webwonders.TableEditor.TableSettingsModal",
+        name: "Webwonders Table Settings Modal",
+        element: () => import('./table-settings-modal.element.ts')
     }
 ];

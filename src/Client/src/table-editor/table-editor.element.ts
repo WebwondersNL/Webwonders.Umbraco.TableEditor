@@ -8,6 +8,8 @@
 } from "@umbraco-cms/backoffice/external/lit";
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UmbChangeEvent } from "@umbraco-cms/backoffice/event";
+import { umbOpenModal } from "@umbraco-cms/backoffice/modal";
+import { TABLE_SETTINGS_MODAL_TOKEN } from "./table-settings-modal.token";
 
 type TableCell = { value: string };
 type TableColumn = { value: string };
@@ -69,25 +71,32 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         this._isEdit = false;
         if (this._original) this._commit(deepCopy(this._original));
     }
-
-    private _toggleColumnHasHeader() {
+    
+    private async _openTableSettings() {
         if (this.readonly) return;
-        const t = deepCopy(this.value ?? createEmptyTable());
-        t.settings.columnHasHeader = !t.settings.columnHasHeader;
-        this._commit(t);
-    }
 
-    private _toggleRowHasHeader() {
-        if (this.readonly) return;
-        const t = deepCopy(this.value ?? createEmptyTable());
-        t.settings.rowHasHeader = !t.settings.rowHasHeader;
-        this._commit(t);
-    }
+        const current = this.value ?? createEmptyTable();
 
-    private _toggleHighlightEmptyCells() {
-        if (this.readonly) return;
-        const t = deepCopy(this.value ?? createEmptyTable());
-        t.settings.highlightEmptyCells = !t.settings.highlightEmptyCells;
+        const result = await umbOpenModal(this, TABLE_SETTINGS_MODAL_TOKEN, {
+            data: {
+                headline: "Table settings",
+                settings: {
+                    columnHasHeader: !!current.settings.columnHasHeader,
+                    rowHasHeader: !!current.settings.rowHasHeader,
+                    highlightEmptyCells: !!current.settings.highlightEmptyCells,
+                },
+            },
+        }).catch(() => undefined);
+
+        // If user cancelled (reject) you’ll get undefined
+        if (!result?.settings) return;
+
+        const t = deepCopy(current);
+        t.settings = {
+            ...t.settings,
+            ...result.settings,
+        };
+
         this._commit(t);
     }
 
@@ -154,14 +163,12 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         const table = this.value ?? createEmptyTable();
 
         return html`
-            
-
             ${this._isEdit
-                    ? html`
-                        ${this._renderEditControls(table)}
-                        ${this._renderEditTable(table)}
-                    `
-                    : html`${this._renderReadTable(table)}`}
+            ? html`
+                    ${this._renderEditControls(table)}
+                    ${this._renderEditTable(table)}
+                `
+            : html`${this._renderReadTable(table)}`}
 
             ${this._renderToolbar()}
         `;
@@ -177,40 +184,39 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                         label=${this._isEdit ? "Done" : "Edit"}></uui-button>
 
                 ${this._isEdit
-                        ? html`
-                            <uui-button
-                                    look="secondary"
-                                    @click=${this._cancel}
-                                    .disabled=${this.readonly}
-                                    label="Cancel"></uui-button>
-                        `
-                        : null}
+            ? html`
+                        <uui-button
+                                look="secondary"
+                                @click=${this._cancel}
+                                .disabled=${this.readonly}
+                                label="Cancel"></uui-button>
+                    `
+            : null}
             </div>
         `;
     }
 
-    private _renderEditControls(table: TableModel) {
+    private _renderEditControls(_table: TableModel) {
         return html`
-            <div class="toggles">
-                <uui-toggle ?checked=${table.settings.columnHasHeader} @change=${this._toggleColumnHasHeader}>
-                    First row is header
-                </uui-toggle>
+            <div class="editControls">
+                <div class="actions">
+                    <uui-button
+                            look="secondary"
+                            @click=${this._addCol}
+                            .disabled=${this.readonly}
+                            label="Add column"></uui-button>
+                </div>
 
-                <uui-toggle ?checked=${table.settings.rowHasHeader} @change=${this._toggleRowHasHeader}>
-                    First column is header
-                </uui-toggle>
-
-                <uui-toggle ?checked=${table.settings.highlightEmptyCells} @change=${this._toggleHighlightEmptyCells}>
-                    Highlight empty cells
-                </uui-toggle>
-            </div>
-
-            <div class="actions">
-                <uui-button
-                        look="secondary"
-                        @click=${this._addCol}
-                        .disabled=${this.readonly}
-                        label="Add column"></uui-button>
+                <div class="settings">
+                    <uui-button
+                            look="secondary"
+                            compact
+                            @click=${this._openTableSettings}
+                            .disabled=${this.readonly}
+                            label="Table settings">
+                        <uui-icon name="icon-settings"></uui-icon>
+                    </uui-button>
+                </div>
             </div>
         `;
     }
@@ -221,35 +227,35 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                 <uui-table-row>
                     ${table.columns.map(
                             (c) => html`
-                                <uui-table-head-cell class=${table.settings.columnHasHeader ? "colHeader" : ""}>
-                                    ${c.value}
-                                </uui-table-head-cell>
-                            `
+                            <uui-table-head-cell class=${table.settings.columnHasHeader ? "colHeader" : ""}>
+                                ${c.value}
+                            </uui-table-head-cell>
+                        `
                     )}
                 </uui-table-row>
 
                 ${table.rows.map(
                         (r) => html`
-                            <uui-table-row
-                                    class=${[r.settings?.isHeaderRow ? "isHeaderRow" : "", r.settings?.isUnderlined ? "isUnderlined" : ""]
-                                            .filter(Boolean)
-                                            .join(" ")}>
-                                ${r.cells.map((cell, ci) => {
-                                    const isEmpty = !cell.value?.trim();
-                                    return html`
-                                        <uui-table-cell
-                                                class=${[
-                                                    table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
-                                                    table.settings.highlightEmptyCells && isEmpty ? "empty" : "",
-                                                ]
-                                                        .filter(Boolean)
-                                                        .join(" ")}>
-                                            ${cell.value}
-                                        </uui-table-cell>
-                                    `;
-                                })}
-                            </uui-table-row>
-                        `
+                        <uui-table-row
+                                class=${[r.settings?.isHeaderRow ? "isHeaderRow" : "", r.settings?.isUnderlined ? "isUnderlined" : ""]
+                                .filter(Boolean)
+                                .join(" ")}>
+                            ${r.cells.map((cell, ci) => {
+                            const isEmpty = !cell.value?.trim();
+                            return html`
+                                    <uui-table-cell
+                                            class=${[
+                                table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
+                                table.settings.highlightEmptyCells && isEmpty ? "empty" : "",
+                            ]
+                                    .filter(Boolean)
+                                    .join(" ")}>
+                                        ${cell.value}
+                                    </uui-table-cell>
+                                `;
+                        })}
+                        </uui-table-row>
+                    `
                 )}
             </uui-table>
         `;
@@ -301,8 +307,8 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                 <div class="gridRow">
                                     ${r.cells.map(
                                             (cell, ci) => html`
-                    <div
-                      class=${[
+                                        <div
+                                            class=${[
                                                 "cell",
                                                 table.settings.rowHasHeader && ci === 0 ? "rowHeader" : "",
                                                 table.settings.highlightEmptyCells && !cell.value?.trim() ? "empty" : "",
@@ -311,13 +317,13 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                             ]
                                                     .filter(Boolean)
                                                     .join(" ")}
-                      style=${`grid-column:${ci + 1};`}
-                      data-col="${ci}">
-                      <uui-input
-                        .value=${cell.value}
-                        @input=${(e: InputEvent) => this._updateCell(ri, ci, (e.target as HTMLInputElement).value)}></uui-input>
-                    </div>
-                  `
+                                            style=${`grid-column:${ci + 1};`}
+                                            data-col="${ci}">
+                                            <uui-input
+                                                .value=${cell.value}
+                                                @input=${(e: InputEvent) => this._updateCell(ri, ci, (e.target as HTMLInputElement).value)}></uui-input>
+                                        </div>
+                                    `
                                     )}
                                 </div>
 
@@ -357,12 +363,12 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             margin-bottom: 10px;
         }
 
-        .toggles {
+        .editControls {
             display: flex;
-            gap: 20px;
-            margin: 10px 0;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 10px 0;
         }
 
         uui-input {
@@ -374,6 +380,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             display: flex;
             flex-direction: column;
             gap: 0;
+            padding-bottom: var(--uui-size-6);
             overflow: hidden;
             background: var(--uui-color-surface);
         }
@@ -392,8 +399,8 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             display: grid;
             grid-template-columns: var(--te-cols);
             gap: var(--uui-size-6);
-            padding: 0;          
-            border-bottom: none; 
+            padding: 0;
+            border-bottom: none;
             min-width: 0;
         }
 
