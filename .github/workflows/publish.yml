@@ -8,8 +8,8 @@ jobs:
   publish:
     uses: WebwondersNL/Webwonders.Workflows/.github/workflows/publish-nuget.yml@main
     with:
-      dotnet-version: '8.0.x'
-      project-glob: 'src/**/Webwonders.Baseline.*.csproj'
+      dotnet-version: '10.0.x'
+      project-glob: 'src/**/Webwonders.Umbraco.TableEditor.csproj'
       prerelease-label: 'beta'
       require-branch-regex: '^(main|release/[0-9]+\.x)$'
       environment-name: 'nuget-prod'                
