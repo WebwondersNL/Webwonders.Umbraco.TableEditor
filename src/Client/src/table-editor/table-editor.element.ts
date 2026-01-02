@@ -48,6 +48,12 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
     @state()
     private _hoverColIndex: number | null = null;
 
+    @state() private _dragRowIndex: number | null = null;
+    @state() private _dragOverRowIndex: number | null = null;
+
+    @state() private _dragColIndex: number | null = null;
+    @state() private _dragOverColIndex: number | null = null;
+
     connectedCallback(): void {
         super.connectedCallback();
 
@@ -214,6 +220,126 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         return table.columns.length === 0 && table.rows.length === 0;
     }
 
+    private _moveRow(from: number, to: number) {
+        if (from === to) return;
+
+        const t = deepCopy(this.value ?? createEmptyTable());
+        if (from < 0 || from >= t.rows.length) return;
+
+        // clamp "to" to valid insertion points (0..len-1)
+        const clampedTo = Math.max(0, Math.min(to, t.rows.length - 1));
+
+        const [row] = t.rows.splice(from, 1);
+        t.rows.splice(clampedTo, 0, row);
+
+        this._commit(t);
+    }
+
+    private _moveCol(from: number, to: number) {
+        if (from === to) return;
+
+        const t = deepCopy(this.value ?? createEmptyTable());
+        if (from < 0 || from >= t.columns.length) return;
+
+        const clampedTo = Math.max(0, Math.min(to, t.columns.length - 1));
+
+        const [col] = t.columns.splice(from, 1);
+        t.columns.splice(clampedTo, 0, col);
+
+        for (const row of t.rows) {
+            const [cell] = row.cells.splice(from, 1);
+            row.cells.splice(clampedTo, 0, cell);
+        }
+
+        this._commit(t);
+    }
+
+    private _onRowDragStart(e: DragEvent, rowIndex: number) {
+        if (this.readonly) return;
+        this._dragRowIndex = rowIndex;
+        this._dragOverRowIndex = rowIndex;
+
+        e.dataTransfer?.setData("text/plain", String(rowIndex));
+        e.dataTransfer?.setData("application/x-webwonders-row", "1");
+        e.dataTransfer?.setDragImage?.((e.target as HTMLElement), 10, 10);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    }
+
+    private _onRowDragOver(e: DragEvent, rowIndex: number) {
+        // allow drop
+        if (!this._isDraggingRow(e)) return;
+        e.preventDefault();
+        this._dragOverRowIndex = rowIndex;
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+    }
+
+    private _onRowDrop(e: DragEvent, rowIndex: number) {
+        if (!this._isDraggingRow(e)) return;
+        e.preventDefault();
+
+        const from = this._dragRowIndex;
+        this._clearRowDrag();
+
+        if (from === null) return;
+        this._moveRow(from, rowIndex);
+    }
+
+    private _onRowDragEnd() {
+        this._clearRowDrag();
+    }
+
+    private _clearRowDrag() {
+        this._dragRowIndex = null;
+        this._dragOverRowIndex = null;
+    }
+
+    private _isDraggingRow(e: DragEvent) {
+        return this._dragRowIndex !== null && e.dataTransfer?.types?.includes("application/x-webwonders-row");
+    }
+
+// --- columns ---
+    private _onColDragStart(e: DragEvent, colIndex: number) {
+        if (this.readonly) return;
+        this._dragColIndex = colIndex;
+        this._dragOverColIndex = colIndex;
+
+        e.dataTransfer?.setData("text/plain", String(colIndex));
+        e.dataTransfer?.setData("application/x-webwonders-col", "1");
+        e.dataTransfer?.setDragImage?.((e.target as HTMLElement), 10, 10);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    }
+
+    private _onColDragOver(e: DragEvent, colIndex: number) {
+        if (!this._isDraggingCol(e)) return;
+        e.preventDefault();
+        this._dragOverColIndex = colIndex;
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+    }
+
+    private _onColDrop(e: DragEvent, colIndex: number) {
+        if (!this._isDraggingCol(e)) return;
+        e.preventDefault();
+
+        const from = this._dragColIndex;
+        this._clearColDrag();
+
+        if (from === null) return;
+        this._moveCol(from, colIndex);
+    }
+
+    private _onColDragEnd() {
+        this._clearColDrag();
+    }
+
+    private _clearColDrag() {
+        this._dragColIndex = null;
+        this._dragOverColIndex = null;
+    }
+
+    private _isDraggingCol(e: DragEvent) {
+        return this._dragColIndex !== null && e.dataTransfer?.types?.includes("application/x-webwonders-col");
+    }
+
     override render() {
         const table = this.value ?? createEmptyTable();
 
@@ -332,13 +458,18 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
         return html`
             <div class="gridEditor" style=${`--te-cols:${templateCols};`}
-            data-hover-col="${this._hoverColIndex ?? ''}">
+            data-hover-col="${this._hoverColIndex ?? ''}"
+            data-drag-col="${this._dragOverColIndex ?? ''}">
                 ${this._renderColumnHoverCss(table.columns.length)}
                 <!-- Header -->
                 <div class="headerLayout">
                     <div class="headerColumns">
                         ${table.columns.map((c, ci) => html`
-                            <div class="headerCol" style=${`grid-column:${ci + 1};`} data-col="${ci}" 
+                            <div class=${["headerCol", this._dragOverColIndex === ci ? "dropTarget" : ""].filter(Boolean).join(" ")} 
+                                 style=${`grid-column:${ci + 1};`} 
+                                 data-col="${ci}"
+                                 @dragover=${(e: DragEvent) => this._onColDragOver(e, ci)}
+                                 @drop=${(e: DragEvent) => this._onColDrop(e, ci)}
                                  @mouseenter=${() => (this._hoverColIndex = ci)}
                                  @mouseleave=${() => (this._hoverColIndex = null)}>
                                 <div class="colRailCell">
@@ -367,6 +498,17 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                                 @click=${(ev: Event) => { ev.stopPropagation(); this._insertCol(ci + 1); }}>
                                             <uui-icon name="icon-arrow-right"></uui-icon>
                                         </uui-button>
+                                        <uui-button
+                                                class="dragHandle"
+                                                label="Drag to reorder column"
+                                                look="secondary"
+                                                compact
+                                                ?disabled=${this.readonly}
+                                                draggable="true"
+                                                @dragstart=${(e: DragEvent) => this._onColDragStart(e, ci)}
+                                                @dragend=${this._onColDragEnd}>
+                                            <uui-icon name="icon-navigation"></uui-icon>
+                                        </uui-button>
                                     </uui-action-bar>
                                 </div>
 
@@ -392,7 +534,10 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                 
                 ${table.rows.map(
                         (r, ri) => html`
-                            <div class="rowLayout" data-row=${ri}>
+                            <div class=${["rowLayout", this._dragOverRowIndex === ri ? "dropTarget" : ""].filter(Boolean).join(" ")}
+                                 @dragover=${(e: DragEvent) => this._onRowDragOver(e, ri)}
+                                 @drop=${(e: DragEvent) => this._onRowDrop(e, ri)} 
+                                 data-row=${ri}>
                                 <div class="gridRow">
                                     ${r.cells.map(
                                             (cell, ci) => html`
@@ -428,6 +573,17 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                                 }}>
                                             <uui-icon name="icon-trash"></uui-icon>
                                         </uui-button>
+                                        <uui-button
+                                                class="dragHandle"
+                                                label="Drag to reorder row"
+                                                look="secondary"
+                                                compact
+                                                ?disabled=${this.readonly}
+                                                draggable="true"
+                                                @dragstart=${(e: DragEvent) => this._onRowDragStart(e, ri)}
+                                                @dragend=${this._onRowDragEnd}>
+                                            <uui-icon name="icon-navigation"></uui-icon>
+                                        </uui-button>
                                     </uui-action-bar>
                                 </div>
                             </div>
@@ -445,10 +601,6 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
     }
 
     private _renderColumnHoverCss(colCount: number) {
-        // Only build rules if we have a hovered column
-        if (this._hoverColIndex === null) return null;
-
-        // Build selectors for all columns (still cheap; colCount is usually small)
         const rules: string[] = [];
 
         for (let i = 0; i < colCount; i++) {
@@ -456,6 +608,13 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
       .gridEditor[data-hover-col="${i}"] .cell[data-col="${i}"],
       .gridEditor[data-hover-col="${i}"] .headerCol[data-col="${i}"] {
         background-color: var(--uui-color-surface-alt);
+        border-radius: var(--uui-border-radius);
+      }
+
+      .gridEditor[data-drag-col="${i}"] .cell[data-col="${i}"],
+      .gridEditor[data-drag-col="${i}"] .headerCol[data-col="${i}"] {
+        border-left: 2px solid var(--uui-color-border-emphasis, var(--uui-color-border));
+        border-right: 2px solid var(--uui-color-border-emphasis, var(--uui-color-border));
         border-radius: var(--uui-border-radius);
       }
     `);
@@ -663,6 +822,21 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         
         .colHead {
             min-width: 0;
+        }
+
+        .dragHandle {
+            cursor: grab;
+        }
+
+        .dragHandle:active {
+            cursor: grabbing;
+        }
+
+        /* Highlight drop target (row or column) */
+        .dropTarget {
+            border: 2px solid var(--uui-palette-malibu-light, var(--uui-palette-malibu-light));
+            outline-offset: 2px;
+            border-radius: var(--uui-border-radius);
         }
     `;
 }
