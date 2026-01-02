@@ -141,15 +141,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         this._isEdit = true;
         this.dispatchEvent(new UmbChangeEvent());
     }
-
-    private _addCol() {
-        if (this.readonly) return;
-        const t = deepCopy(this.value ?? createEmptyTable());
-        t.columns.push({ value: "" });
-        for (const row of t.rows) row.cells.push({ value: "" });
-        this._commit(t);
-    }
-
+    
     private _insertRow(index: number) {
         if (this.readonly) return;
 
@@ -166,21 +158,37 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         this._commit(t);
     }
 
+    private _insertCol(index: number) {
+        if (this.readonly) return;
+
+        const t = deepCopy(this.value ?? createEmptyTable());
+
+        const safeIndex = Math.max(0, Math.min(index, t.columns.length));
+        
+        t.columns.splice(safeIndex, 0, { value: "" });
+        
+        for (const row of t.rows) {
+            row.cells.splice(safeIndex, 0, { value: "" });
+        }
+
+        this._commit(t);
+    }
+
     private _removeCol(index: number) {
         if (this.readonly) return;
         const t = deepCopy(this.value ?? createEmptyTable());
+        if (t.columns.length <= 1) return;
         if (index < 0 || index >= t.columns.length) return;
 
         t.columns.splice(index, 1);
         for (const row of t.rows) row.cells.splice(index, 1);
-        if (t.columns.length === 0) t.rows = [];
-
         this._commit(t);
     }
 
     private _removeRow(index: number) {
         if (this.readonly) return;
         const t = deepCopy(this.value ?? createEmptyTable());
+        if(t.rows.length <= 1) return;
         if (index < 0 || index >= t.rows.length) return;
         t.rows.splice(index, 1);
         this._commit(t);
@@ -264,14 +272,6 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
     private _renderEditControls(_table: TableModel) {
         return html`
             <div class="editControls">
-                <div class="actions">
-                    <uui-button
-                            look="secondary"
-                            @click=${this._addCol}
-                            .disabled=${this.readonly}
-                            label="Add column"></uui-button>
-                </div>
-
                 <div class="settings">
                     <uui-button
                             look="secondary"
@@ -344,11 +344,28 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                 <div class="colRailCell">
                                     <uui-action-bar class="colRailActions">
                                         <uui-button
+                                                label="Insert column before"
+                                                look="primary"
+                                                compact
+                                                ?disabled=${this.readonly}
+                                                @click=${(ev: Event) => { ev.stopPropagation(); this._insertCol(ci); }}>
+                                            <uui-icon name="icon-arrow-left"></uui-icon>
+                                        </uui-button>
+                                        <uui-button
                                                 label="Delete column"
                                                 look="primary"
                                                 compact
+                                                ?disabled=${this.readonly || table.columns.length <= 1}
                                                 @click=${(ev: Event) => { ev.stopPropagation(); this._removeCol(ci); }}>
                                             <uui-icon name="icon-trash"></uui-icon>
+                                        </uui-button>
+                                        <uui-button
+                                                label="Insert column after"
+                                                look="primary"
+                                                compact
+                                                ?disabled=${this.readonly}
+                                                @click=${(ev: Event) => { ev.stopPropagation(); this._insertCol(ci + 1); }}>
+                                            <uui-icon name="icon-arrow-right"></uui-icon>
                                         </uui-button>
                                     </uui-action-bar>
                                 </div>
@@ -404,6 +421,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                         <uui-button
                                                 label="Delete row"
                                                 look="primary"
+                                                ?disabled=${this.readonly || table.rows.length <= 1}
                                                 @click=${(ev: Event) => {
                                                     ev.stopPropagation();
                                                     this._removeRow(ri);
@@ -457,7 +475,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         .editControls {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end;
             gap: 10px;
             margin: 10px 0;
         }
