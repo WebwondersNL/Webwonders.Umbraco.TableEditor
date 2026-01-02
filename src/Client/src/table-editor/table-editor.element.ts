@@ -10,6 +10,7 @@ import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UmbChangeEvent } from "@umbraco-cms/backoffice/event";
 import { umbOpenModal } from "@umbraco-cms/backoffice/modal";
 import { TABLE_SETTINGS_MODAL_TOKEN } from "./table-settings-modal.token";
+import { TABLE_CREATE_MODAL_TOKEN } from "./table-create-modal.token";
 
 type TableCell = { value: string };
 type TableColumn = { value: string };
@@ -43,6 +44,9 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
     @state()
     private _original?: TableModel;
+
+    @state()
+    private _hoverColIndex: number | null = null;
 
     connectedCallback(): void {
         super.connectedCallback();
@@ -87,8 +91,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                 },
             },
         }).catch(() => undefined);
-
-        // If user cancelled (reject) you’ll get undefined
+        
         if (!result?.settings) return;
 
         const t = deepCopy(current);
@@ -98,6 +101,45 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         };
 
         this._commit(t);
+    }
+
+    private async _openCreateTableModal() {
+        if (this.readonly) return;
+
+        const result = await umbOpenModal(this, TABLE_CREATE_MODAL_TOKEN, {
+            data: {
+                headline: "Create table",
+                rows: 3,
+                columns: 3,
+            },
+        }).catch(() => undefined);
+
+        if (!result) return;
+
+        this._createTable(result.rows, result.columns);
+    }
+
+    private _createTable(rowCount: number, colCount: number) {
+        const cols = Array.from({ length: colCount }, () => ({ value: "" }));
+        const rows = Array.from({ length: rowCount }, () => ({
+            settings: {},
+            cells: Array.from({ length: colCount }, () => ({ value: "" })),
+        }));
+
+        const next = {
+            ...(this.value ?? { settings: { columnHasHeader: false, rowHasHeader: false, highlightEmptyCells: false }, columns: [], rows: [] }),
+            settings: {
+                columnHasHeader: false,
+                rowHasHeader: false,
+                highlightEmptyCells: false,
+            },
+            columns: cols,
+            rows,
+        };
+        
+        this.value = next;
+        this._isEdit = true;
+        this.dispatchEvent(new UmbChangeEvent());
     }
 
     private _addCol() {
@@ -159,6 +201,11 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         this._commit(t);
     }
 
+    private _isTableEmpty(table: TableModel | undefined) {
+        if (!table) return true;
+        return table.columns.length === 0 && table.rows.length === 0;
+    }
+
     override render() {
         const table = this.value ?? createEmptyTable();
 
@@ -175,13 +222,31 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
     }
 
     private _renderToolbar() {
+        const table = this.value;
+        const isEmpty = this._isTableEmpty(table);
+
         return html`
             <div class="toolbar">
-                <uui-button
+                ${!this._isEdit && isEmpty
+                        ? html`
+                    <uui-button
                         look="primary"
-                        @click=${this._toggleEdit}
-                        .disabled=${this.readonly}
-                        label=${this._isEdit ? "Done" : "Edit"}></uui-button>
+                        label="Create table"
+                        ?disabled=${this.readonly}
+                        @click=${this._openCreateTableModal}>
+                        Create
+                    </uui-button>
+                `
+                        : html`
+                    <uui-button
+                        look="primary"
+                        label=${this._isEdit ? "Done" : "Edit"}
+                        ?disabled=${this.readonly}
+                        @click=${this._toggleEdit}>
+                        ${this._isEdit ? "Done" : "Edit"}
+                    </uui-button>
+                `
+                }
 
                 ${this._isEdit
             ? html`
@@ -266,41 +331,48 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         const templateCols = `repeat(${Math.max(colCount, 1)}, minmax(140px, 1fr))`;
 
         return html`
-            <div class="gridEditor" style=${`--te-cols:${templateCols};`}>
+            <div class="gridEditor" style=${`--te-cols:${templateCols};`}
+            data-hover-col="${this._hoverColIndex ?? ''}">
+                ${this._renderColumnHoverCss(table.columns.length)}
                 <!-- Header -->
                 <div class="headerLayout">
-                    <div class="gridHeader">
+                    <div class="headerColumns">
                         ${table.columns.map((c, ci) => html`
-                            <div class="colHead" data-col="${ci}" style=${`grid-column:${ci + 1};`}>
-                                <uui-input
-                                        .value=${c.value}
-                                        @input=${(e: InputEvent) => this._updateColName(ci, (e.target as HTMLInputElement).value)}></uui-input>
+                            <div class="headerCol" style=${`grid-column:${ci + 1};`} data-col="${ci}" 
+                                 @mouseenter=${() => (this._hoverColIndex = ci)}
+                                 @mouseleave=${() => (this._hoverColIndex = null)}>
+                                <div class="colRailCell">
+                                    <uui-action-bar class="colRailActions">
+                                        <uui-button
+                                                label="Delete column"
+                                                look="primary"
+                                                compact
+                                                @click=${(ev: Event) => { ev.stopPropagation(); this._removeCol(ci); }}>
+                                            <uui-icon name="icon-trash"></uui-icon>
+                                        </uui-button>
+                                    </uui-action-bar>
+                                </div>
 
-                                <uui-action-bar class="colActions">
-                                    <uui-button
-                                            label="Delete column"
-                                            look="primary"
-                                            @click=${(ev: Event) => { ev.stopPropagation(); this._removeCol(ci); }}>
-                                        <uui-icon name="icon-trash"></uui-icon>
-                                    </uui-button>
-                                </uui-action-bar>
+                                <div class="colHead">
+                                    <uui-input
+                                            .value=${c.value}
+                                            @input=${(e: InputEvent) => this._updateColName(ci, (e.target as HTMLInputElement).value)}>
+                                    </uui-input>
+                                </div>
                             </div>
                         `)}
                     </div>
 
-                    <!-- header gutter (empty, just for alignment) -->
                     <div class="headerGutter" aria-hidden="true"></div>
                 </div>
-
-                <!-- Insert at top -->
+                
                 <div class="insertLine insertTop">
                     <uui-button-inline-create
                             label="Add row"
                             .disabled=${this.readonly}
                             @click=${() => this._insertRow(0)}></uui-button-inline-create>
                 </div>
-
-                <!-- Rows (with right-hand action gutter) -->
+                
                 ${table.rows.map(
                         (r, ri) => html`
                             <div class="rowLayout" data-row=${ri}>
@@ -341,8 +413,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                     </uui-action-bar>
                                 </div>
                             </div>
-
-                            <!-- Insert between rows (after ri) -->
+                            
                             <div class="insertLine" style=${`--afterRow:${ri};`}>
                                 <uui-button-inline-create
                                         label="Add row"
@@ -353,6 +424,26 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                 )}
             </div>
         `;
+    }
+
+    private _renderColumnHoverCss(colCount: number) {
+        // Only build rules if we have a hovered column
+        if (this._hoverColIndex === null) return null;
+
+        // Build selectors for all columns (still cheap; colCount is usually small)
+        const rules: string[] = [];
+
+        for (let i = 0; i < colCount; i++) {
+            rules.push(`
+      .gridEditor[data-hover-col="${i}"] .cell[data-col="${i}"],
+      .gridEditor[data-hover-col="${i}"] .headerCol[data-col="${i}"] {
+        background-color: var(--uui-color-surface-alt);
+        border-radius: var(--uui-border-radius);
+      }
+    `);
+        }
+
+        return html`<style>${rules.join("\n")}</style>`;
     }
 
     static styles = css`
@@ -374,8 +465,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         uui-input {
             width: 100%;
         }
-
-        /* Edit surface */
+        
         .gridEditor {
             display: flex;
             flex-direction: column;
@@ -383,16 +473,6 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             padding-bottom: var(--uui-size-6);
             overflow: hidden;
             background: var(--uui-color-surface);
-        }
-
-        .headerLayout {
-            display: grid;
-            grid-template-columns: 1fr 56px;
-            gap: var(--uui-size-2);
-            align-items: center;
-
-            padding: var(--uui-size-6);
-            border-bottom: 1px solid var(--uui-color-border);
         }
 
         .gridHeader {
@@ -415,34 +495,13 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             align-items: center;
             min-width: 0;
         }
-
-        .colActions {
-            position: absolute;
-            right: var(--uui-size-2);
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 120ms ease-in-out;
-        }
-
-        .colHead:hover .colActions,
-        .colHead:focus-within .colActions {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* ---- Row layout with right gutter ---- */
+        
         .rowLayout {
             display: grid;
-            grid-template-columns: 1fr 56px; /* gutter width */
+            grid-template-columns: 1fr 56px;
             gap: var(--uui-size-2);
             align-items: center;
-
-            padding: var(--uui-size-6);
             border-bottom: 1px solid var(--uui-color-border);
-
             transition: background-color 120ms ease-in-out;
         }
 
@@ -456,14 +515,14 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             display: grid;
             grid-template-columns: var(--te-cols);
             gap: var(--uui-size-6);
-            padding: 0; /* padding handled by rowLayout */
-            border-bottom: none; /* border handled by rowLayout */
+            padding: 0;
+            border-bottom: none;
             min-width: 0;
         }
 
         .rowActionsRail {
             display: flex;
-            justify-content: flex-end;
+            justify-content: flex-start;
             align-items: center;
         }
 
@@ -502,8 +561,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             outline: 1px dashed var(--uui-color-border);
             outline-offset: 2px;
         }
-
-        /* Insert lines (between rows) */
+        
         .insertLine {
             position: relative;
             height: 0;
@@ -532,6 +590,61 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             right: 0;
             top: -10px;
             height: 20px;
+        }
+
+        .headerLayout {
+            display: grid;
+            grid-template-columns: 1fr 56px;
+            gap: var(--uui-size-2);
+            align-items: start;
+            border-bottom: 1px solid var(--uui-color-border);
+        }
+
+        .headerColumns {
+            display: grid;
+            grid-template-columns: var(--te-cols);
+            gap: var(--uui-size-6);
+            min-width: 0;
+        }
+        
+        .headerCol {
+            display: flex;
+            flex-direction: column;
+            gap: var(--uui-size-2);
+            padding: var(--uui-size-2) var(--uui-size-6) var(--uui-size-6) var(--uui-size-6);
+            min-width: 0;
+        }
+
+        .colRailCell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 30px;
+        }
+        
+        .colRailActions {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 120ms ease-in-out;
+        }
+        
+        .headerCol:hover .colRailActions,
+        .headerCol:focus-within .colRailActions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .headerCol {
+            transition: background-color 120ms ease-in-out;
+        }
+        
+        .cell {
+            padding: var(--uui-size-6);
+            transition: background-color 120ms ease-in-out;
+        }
+        
+        .colHead {
+            min-width: 0;
         }
     `;
 }

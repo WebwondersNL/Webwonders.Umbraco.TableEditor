@@ -24,5 +24,11 @@
         alias: "Webwonders.TableEditor.TableSettingsModal",
         name: "Webwonders Table Settings Modal",
         element: () => import('./table-settings-modal.element.ts')
+    },
+    {
+        type: "modal",
+        alias: "Webwonders.TableEditor.CreateTableModal",
+        name: "Webwonders Table Create Modal",
+        element: () => import('./table-create-modal.element.ts')
     }
 ];
