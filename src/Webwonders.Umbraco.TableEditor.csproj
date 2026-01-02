@@ -11,8 +11,7 @@
     <Product>Webwonders.Umbraco.TableEditor</Product>
     <Title>Webwonders.Umbraco.TableEditor</Title>
   </PropertyGroup>
-
-
+  
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="[17.0.0,18.0.0)" />
     <PackageReference Include="Umbraco.Cms.Web.Common" Version="[17.0.0,18.0.0)" />
@@ -23,11 +22,10 @@
   <ItemGroup>
     <!-- Dont include the client folder as part of packaging nuget build -->
     <Content Remove="Client\**" />
-    <Content Include="Client\src\table-editor\Public\umbraco-package.json" />
-
+    <Content Include="Client\src\table-editor\Public\umbraco-package.json" Pack="false"/>
     <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
   </ItemGroup>
-
+  
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="wwwroot\" />
