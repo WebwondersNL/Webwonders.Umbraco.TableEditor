@@ -14,7 +14,7 @@ public class WebwondersTableEditorPropertyValueConverter : PropertyValueConverte
         => propertyType.EditorAlias == Constants.SchemaAlias;
     
     public override Type GetPropertyValueType(IPublishedPropertyType propertyType)
-        => typeof(TableEditorValue);
+        => typeof(WebwondersTableEditor);
 
     public override PropertyCacheLevel GetPropertyCacheLevel(IPublishedPropertyType propertyType)
         => PropertyCacheLevel.Element;
@@ -38,7 +38,7 @@ public class WebwondersTableEditorPropertyValueConverter : PropertyValueConverte
 
         try
         {
-            return JsonSerializer.Deserialize<TableEditorValue>(json, JsonOptions);
+            return JsonSerializer.Deserialize<WebwondersTableEditor>(json, JsonOptions);
         }
         catch
         {

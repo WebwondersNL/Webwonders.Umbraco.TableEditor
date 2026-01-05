@@ -1,6 +1,6 @@
 ﻿namespace Webwonders.Umbraco.TableEditor.Models;
 
-public class TableEditorValue
+public class WebwondersTableEditor
 {
     public TableSettings Settings { get; set; } = new();
     public List<TableColumn> Columns { get; set; } = new();

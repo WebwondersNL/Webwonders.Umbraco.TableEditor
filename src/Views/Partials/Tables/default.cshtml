@@ -1,0 +1,118 @@
+﻿@using Webwonders.Umbraco.TableEditor.Models
+@model WebwondersTableEditor
+
+@{
+    if (Model == null || !Model.Columns.Any())
+    {
+        return;
+    }
+
+    var columnHasHeader = Model.Settings.ColumnHasHeader;
+    var rowHasHeader = Model.Settings.RowHasHeader;
+}
+<p>Package Default</p>
+<table class="ww-table">
+    
+    @* ─────────────────────────────
+       Column headers
+       ───────────────────────────── *@
+    @if (columnHasHeader)
+    {
+        <thead>
+            <tr>
+                @foreach (var column in Model.Columns)
+                {
+                    <th scope="col" class="ww-table__col-header">
+                        @column.Value
+                    </th>
+                }
+            </tr>
+        </thead>
+    }
+
+    <tbody>
+        @* If column headers are disabled, render columns as a normal first row *@
+        @if (!columnHasHeader)
+        {
+            <tr class="ww-table__columns-row">
+                @foreach (var column in Model.Columns)
+                {
+                    <td class="ww-table__cell">
+                        @column.Value
+                    </td>
+                }
+            </tr>
+        }
+
+        @* ─────────────────────────────
+           Data rows
+           ───────────────────────────── *@
+        @foreach (var row in Model.Rows)
+        {
+            var isHeaderRow = row.Settings?.IsHeaderRow == true;
+            var isUnderlined = row.Settings?.IsUnderlined == true;
+
+            var rowClasses = string.Join(" ", new[]
+            {
+                "ww-table__row",
+                isHeaderRow ? "ww-table__row--header" : null,
+                isUnderlined ? "ww-table__row--underlined" : null
+            }.Where(c => c != null));
+
+            <tr class="@rowClasses">
+                @for (var i = 0; i < Model.Columns.Count; i++)
+                {
+                    var cellValue = i < row.Cells.Count
+                        ? row.Cells[i]?.Value
+                        : string.Empty;
+
+                    @* Entire row is a header row *@
+                    if (isHeaderRow)
+                    {
+                        <th scope="col" class="ww-table__cell">
+                            @cellValue
+                        </th>
+                        continue;
+                    }
+
+                    @* First column is a row header *@
+                    if (rowHasHeader && i == 0)
+                    {
+                        <th scope="row" class="ww-table__cell ww-table__row-header">
+                            @cellValue
+                        </th>
+                    }
+                    else
+                    {
+                        <td class="ww-table__cell">
+                            @cellValue
+                        </td>
+                    }
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .ww-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .ww-table th,
+    .ww-table td {
+      padding: 0.5rem;
+      text-align: left;
+      border: 1px solid rgba(0,0,0,.1);
+    }
+    
+    .ww-table__row--header th {
+      font-weight: 600;
+    }
+    
+    .ww-table__row--underlined th,
+    .ww-table__row--underlined td {
+      text-decoration: underline;
+    }
+</style>
