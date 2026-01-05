@@ -10,6 +10,21 @@
     <PackageId>Webwonders.Umbraco.TableEditor</PackageId>
     <Product>Webwonders.Umbraco.TableEditor</Product>
     <Title>Webwonders.Umbraco.TableEditor</Title>
+    <Description>
+    A modern and flexible table editor for Umbraco.
+    Provides editors with fine-grained control over table structure and semantics,
+    while giving developers a clean and extensible rendering experience.
+    </Description>
+    <Authors>Webwonders</Authors>
+    <Company>Webwonders</Company>
+    <ProjectUrl>https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor</ProjectUrl>
+    <RepositoryUrl>https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>webwonders.png</PackageIcon>
+    <RepositoryType>git</RepositoryType>
+    <UmbracoPackageId>Webwonders.Umbraco.TableEditor</UmbracoPackageId>
+    <PackageTags>umbraco-marketplace,Umbraco</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   
   <ItemGroup>
@@ -29,5 +44,10 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="webwonders.png" Pack="true" PackagePath="" />
   </ItemGroup>
 </Project>

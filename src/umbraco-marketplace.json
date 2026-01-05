@@ -1,24 +1,24 @@
-//{
-//  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
-//  "AuthorDetails": {
-//    "Name": "Webwonders",
-//    "Description": "Webwonders is a digital agency and Umbraco Platinum Partner based in Eindhoven, the Netherlands.",
-//    "Url": "https://www.webwonders.nl/",
-//    "ImageUrl": "https://www.webwonders.nl/Images/logo/Webwonders icon.png",
-//    "SyncContributorsFromRepository": true
-//  },
-//  "Category": "Developer Tools",
-//  "Description": "",
-//  "IssueTrackerUrl": "",
-//  "DocumentationUrl": "",
-//  "LicenseTypes": [ "Free" ],
-//  "IsSubPackageOf": "",
-//  "PackageType": "Package",
-//  "PackagesByAuthor": [],
-//  "RelatedPackages": [],
-//  "Screenshots": [],
-//  "Tags": [ "Umbraco Cloud", "Umbraco", "Configuration" ],
-//  "Title": "Webwonders Table Editor",
-//  "VideoUrl": "",
-//  "VersionDependencyMode": "SemVer"
-//}
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "AuthorDetails": {
+    "Name": "Webwonders",
+    "Description": "Webwonders is a digital agency and Umbraco Platinum Partner based in Eindhoven, the Netherlands.",
+    "Url": "https://www.webwonders.nl/",
+    "ImageUrl": "https://www.webwonders.nl/Images/logo/Webwonders icon.png",
+    "SyncContributorsFromRepository": true
+  },
+  "Category": "Editor Tools",
+  "Description": "A modern, flexible table editor for Umbraco that gives editors fine-grained control over rows, columns and table semantics, while providing developers with a clean and extensible rendering experience.",
+  "IssueTrackerUrl": "https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor/issues",
+  "DocumentationUrl": "https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor",
+  "LicenseTypes": [ "Free" ],
+  "IsSubPackageOf": "",
+  "PackageType": "Package",
+  "PackagesByAuthor": [],
+  "RelatedPackages": [],
+  "Screenshots": [],
+  "Tags": [ "Umbraco Cloud", "Umbraco", "Table", "Backoffice", "Editor" ],
+  "Title": "Webwonders Table Editor",
+  "VideoUrl": "",
+  "VersionDependencyMode": "SemVer"
+}
