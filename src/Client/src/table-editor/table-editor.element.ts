@@ -109,6 +109,21 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         this._commit(t);
     }
 
+    private _updateRowSettings(rowIndex: number, patch: Partial<RowSettings>) {
+        if (this.readonly) return;
+
+        const t = deepCopy(this.value ?? createEmptyTable());
+        const row = t.rows[rowIndex];
+        if (!row) return;
+
+        row.settings = {
+            ...(row.settings ?? {}),
+            ...patch,
+        };
+
+        this._commit(t);
+    }
+
     private async _openCreateTableModal() {
         if (this.readonly) return;
 
@@ -295,6 +310,17 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
     private _isDraggingRow(e: DragEvent) {
         return this._dragRowIndex !== null && e.dataTransfer?.types?.includes("application/x-webwonders-row");
+    }
+
+    private _closePopoverFromEvent(e: Event) {
+        const el = e.currentTarget as HTMLElement | null;
+        const popover = el?.closest("uui-popover-container") as any;
+        if (!popover) return;
+
+        // UUI / Popover API variants:
+        if (typeof popover.hidePopover === "function") popover.hidePopover();
+        else if (typeof popover.close === "function") popover.close();
+        else if ("open" in popover) popover.open = false;
     }
 
 // --- columns ---
@@ -563,16 +589,56 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
                                 <div class="rowActionsRail">
                                     <uui-action-bar class="rowActions">
-                                        <uui-button
-                                                label="Delete row"
-                                                look="primary"
-                                                ?disabled=${this.readonly || table.rows.length <= 1}
-                                                @click=${(ev: Event) => {
-                                                    ev.stopPropagation();
-                                                    this._removeRow(ri);
-                                                }}>
-                                            <uui-icon name="icon-trash"></uui-icon>
+                                        <uui-button popovertarget="rowSettingsMenu${ri}"
+                                        look="secondary"
+                                        label="Row settings"
+                                        compact>
+                                            <uui-symbol-more></uui-symbol-more>
                                         </uui-button>
+                                        <uui-popover-container id="rowSettingsMenu${ri}" placement="top-left" interaction="click">
+                                            <uui-box class="rowMenu" @click=${(ev: Event) => ev.stopPropagation()}>
+                                                <div class="rowMenuItem">
+                                                    <span>Header row</span>
+                                                    <uui-toggle
+                                                            ?checked=${!!r.settings?.isHeaderRow}
+                                                            ?disabled=${this.readonly}
+                                                            @change=${(e: Event) =>
+                                                                    this._updateRowSettings(ri, { isHeaderRow: (e.target as any).checked })}>
+                                                    </uui-toggle>
+                                                </div>
+
+                                                <div class="rowMenuItem">
+                                                    <span>Underlined</span>
+                                                    <uui-toggle
+                                                            ?checked=${!!r.settings?.isUnderlined}
+                                                            ?disabled=${this.readonly}
+                                                            @change=${(e: Event) =>
+                                                                    this._updateRowSettings(ri, { isUnderlined: (e.target as any).checked })}>
+                                                    </uui-toggle>
+                                                </div>
+
+                                                <div class="rowMenuDivider"></div>
+                                                <div class="rowMenuActions">
+                                                    <uui-button
+                                                            label="Delete row"
+                                                            look="primary"
+                                                            color="danger"
+                                                            ?disabled=${this.readonly || table.rows.length <= 1}
+                                                            popovertargetaction="hide"
+                                                            @click=${(ev: Event) => { ev.stopPropagation();this._closePopoverFromEvent(ev); this._removeRow(ri);}}>
+                                                        <uui-icon name="icon-trash"></uui-icon>
+                                                    </uui-button>
+                                                    <uui-button
+                                                            look="primary"
+                                                            @click=${(ev: Event) => {
+                                                                ev.stopPropagation();
+                                                                this._closePopoverFromEvent(ev);
+                                                            }}>
+                                                        Done
+                                                    </uui-button>
+                                                </div>
+                                            </uui-box>
+                                        </uui-popover-container>
                                         <uui-button
                                                 class="dragHandle"
                                                 label="Drag to reorder row"
@@ -662,7 +728,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         }
 
         .headerGutter {
-            width: 56px;
+            width: 84px;
         }
 
         .colHead {
@@ -675,7 +741,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
         
         .rowLayout {
             display: grid;
-            grid-template-columns: 1fr 56px;
+            grid-template-columns: 1fr 84px;
             gap: var(--uui-size-2);
             align-items: center;
             border-bottom: 1px solid var(--uui-color-border);
@@ -771,7 +837,7 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
         .headerLayout {
             display: grid;
-            grid-template-columns: 1fr 56px;
+            grid-template-columns: 1fr 84px;
             gap: var(--uui-size-2);
             align-items: start;
             border-bottom: 1px solid var(--uui-color-border);
@@ -837,6 +903,32 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
             border: 2px solid var(--uui-palette-malibu-light, var(--uui-palette-malibu-light));
             outline-offset: 2px;
             border-radius: var(--uui-border-radius);
+        }
+
+        .rowMenu {
+            padding: var(--uui-size-4);
+            min-width: 200px;
+        }
+
+        .rowMenuItem {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin:8px 0;
+            gap: var(--uui-size-6);
+        }
+
+        .rowMenuDivider {
+            height: 1px;
+            background: var(--uui-color-border);
+            margin: var(--uui-size-2) 0;
+        }
+        
+        .rowMenuActions {
+            margin-top:8px;
+            display:flex;
+            flex-direction:row;
+            justify-content: space-between;
         }
     `;
 }
