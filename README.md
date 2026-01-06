@@ -106,7 +106,7 @@ To see how this is done, click here to view the [source code of the default view
 
 ## Issues & contributions
 
-- Issues: https://github.com/WebwondersNL/Webwonders.TableEditor/issues
+- Issues: https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor/issues
 
 - Pull requests are welcome.
 
