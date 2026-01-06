@@ -4,20 +4,18 @@ A modern, flexible table editor for Umbraco that gives editors fine-grained cont
 
 Built and maintained by **Webwonders**, Umbraco Platinum Partner.
 
----
-
-## ✨ Features
+## Features
 
 ### For editors
 - Intuitive table editor in the Umbraco backoffice
 - Add, remove and reorder rows and columns
 - Per-row settings:
-    - Mark a row as a header row
-    - Underline rows
+  - Mark a row as a header row
+  - Underline rows
 - Global table settings:
-    - Column headers
-    - Row headers
-    - Highlight empty cells
+  - Column headers
+  - Row headers
+  - Highlight empty cells
 
 ### For developers
 - Strongly-typed table model
@@ -26,9 +24,9 @@ Built and maintained by **Webwonders**, Umbraco Platinum Partner.
 - Default frontend rendering included
 - Easy view-based overrides (no JavaScript required)
 
----
 
-## 📦 Installation
+
+## Installation
 
 ### NuGet
 ```bash
@@ -37,44 +35,35 @@ dotnet add package Webwonders.Umbraco.TableEditor
 
 Or install via the **NuGet Package Manager**.
 
----
 
-## 🧩 Usage
+## Usage
 
-### 1️⃣ Create the data type
-Create a new **Webwonders Table Editor** data type in the Umbraco backoffice and add it to your document type.
+### 1. Create the data type
+Create a new **Webwonders Table Editor** data type in the Umbraco backoffice and add it to your document types
 
----
 
-### 2️⃣ Rendering in Razor (simple)
-
+### 2. Rendering in Razor (simple)
 The easiest way to render a table is using the provided HtmlHelper extension:
 
 ```cshtml
 @await Html.RenderTableAsync(Model, "tableEditorAlias")
 ```
-
 This will:
 - read the table value from the current content item
 - render it using the default theme
 
----
-
-### 3️⃣ Rendering with an explicit theme
+### 3. Rendering with an explicit theme
 
 ```cshtml
 @await Html.RenderTableAsync(Model, "tableEditorAlias", theme: "default")
 ```
-
 Themes map to Razor views located at:
-
 ```text
 /Views/Partials/Tables/{theme}.cshtml
 ```
 
----
 
-## 🎨 Default rendering
+## Default rendering
 
 The package ships with a default table rendering view:
 
@@ -100,98 +89,28 @@ This view:
 
 No styling framework is enforced — you are free to style as you see fit.
 
-## 🧩 Creating your own table partial
+## Creating your own table view
 
 If you prefer full control over the HTML output, you can render the table with your own partial view by accessing the strongly-typed model and writing your own Razor markup.
 
+To see how this is done, click here to view the [source code of the default view](https://github.com/WebwondersNL/Webwonders.Umbraco.TableEditor/blob/main/src/Views/Partials/Tables/default.cshtml)
 
-
----
-
-### Example: Custom Partial Theme
-
-```cshtml
-@using Webwonders.Umbraco.TableEditor.Models
-@model WebwondersTableEditor
-
-@{
-    if (Model == null || !Model.Columns.Any())
-    {
-        return;
-    }
-
-    var columnHasHeader = Model.Settings.ColumnHasHeader;
-    var rowHasHeader = Model.Settings.RowHasHeader;
-}
-
-<table>
-    @if (columnHasHeader)
-    {
-        <thead>
-            <tr>
-                @foreach (var column in Model.Columns)
-                {
-                    <th scope="col">@column.Value</th>
-                }
-            </tr>
-        </thead>
-    }
-
-    <tbody>
-        @foreach (var row in Model.Rows)
-        {
-            var isHeaderRow = row.Settings?.IsHeaderRow == true;
-
-            <tr>
-                @for (var i = 0; i < Model.Columns.Count; i++)
-                {
-                    var cellValue = i < row.Cells.Count
-                        ? row.Cells[i]?.Value
-                        : string.Empty;
-
-                    if (isHeaderRow)
-                    {
-                        <th scope="col">@cellValue</th>
-                    }
-                    else if (rowHasHeader && i == 0)
-                    {
-                        <th scope="row">@cellValue</th>
-                    }
-                    else
-                    {
-                        <td>@cellValue</td>
-                    }
-                }
-            </tr>
-        }
-    </tbody>
-</table>
-```
-
----
-
-## 🔧 Supported versions
+## Supported versions
 
 - **Umbraco CMS:** 17+
 - **.NET:** 10+
 
----
-
-## 🧪 Development notes
+## Development notes
 - In some environments, adding new Razor views may require an application restart.
 
----
 
-## 🐞 Issues & contributions
+## Issues & contributions
 
-- Issues:  
-  https://github.com/WebwondersNL/Webwonders.TableEditor/issues
+- Issues: https://github.com/WebwondersNL/Webwonders.TableEditor/issues
 
 - Pull requests are welcome.
 
----
-
-## 📄 License
+## License
 
 MIT License  
 © Webwonders
