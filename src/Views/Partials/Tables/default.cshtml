@@ -20,10 +20,15 @@
     {
         <thead>
             <tr>
-                @foreach (var column in Model.Columns)
+                @for (var i = 0; i < Model.Columns.Count; i++)
                 {
-                    <th scope="col" class="ww-table__col-header">
-                        @column.Value
+                    var colClasses = string.Join(" ", new[]
+                    {
+                        "ww-table__col-header",
+                        rowHasHeader && i == 0 ? "ww-table__row-header" : null
+                    }.Where(c => c != null));
+                    <th scope="col" class="@colClasses">
+                        @Model.Columns[i].Value
                     </th>
                 }
             </tr>
@@ -35,11 +40,21 @@
         @if (!columnHasHeader)
         {
             <tr class="ww-table__columns-row">
-                @foreach (var column in Model.Columns)
+                @for (var i = 0; i < Model.Columns.Count; i++)
                 {
-                    <td class="ww-table__cell">
-                        @column.Value
-                    </td>
+                    var colValue = Model.Columns[i].Value;
+                    if (rowHasHeader && i == 0)
+                    {
+                        <th scope="row" class="ww-table__cell ww-table__row-header@(string.IsNullOrWhiteSpace(colValue) ? " ww-table__cell--empty" : "")">
+                            @colValue
+                        </th>
+                    }
+                    else
+                    {
+                        <td class="ww-table__cell@(string.IsNullOrWhiteSpace(colValue) ? " ww-table__cell--empty" : "")">
+                            @colValue
+                        </td>
+                    }
                 }
             </tr>
         }
@@ -69,7 +84,7 @@
                     @* Entire row is a header row *@
                     if (isHeaderRow)
                     {
-                        <th scope="col" class="ww-table__cell">
+                        <th scope="col" class="ww-table__cell@(string.IsNullOrWhiteSpace(cellValue) ? " ww-table__cell--empty" : "")">
                             @cellValue
                         </th>
                         continue;
@@ -78,13 +93,13 @@
                     @* First column is a row header *@
                     if (rowHasHeader && i == 0)
                     {
-                        <th scope="row" class="ww-table__cell ww-table__row-header">
+                        <th scope="row" class="ww-table__cell ww-table__row-header@(string.IsNullOrWhiteSpace(cellValue) ? " ww-table__cell--empty" : "")">
                             @cellValue
                         </th>
                     }
                     else
                     {
-                        <td class="ww-table__cell">
+                        <td class="ww-table__cell@(string.IsNullOrWhiteSpace(cellValue) ? " ww-table__cell--empty" : "")">
                             @cellValue
                         </td>
                     }

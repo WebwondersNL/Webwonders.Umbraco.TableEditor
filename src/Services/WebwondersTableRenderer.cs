@@ -45,17 +45,27 @@ public class WebwondersTableRenderer : IWebwondersTableRenderer
     {
         var table = content.Value<WebwondersTableEditor>(propertyAlias);
         if (table is null) return HtmlString.Empty;
-        
+        return await RenderTableAsync(html, table, theme);
+    }
+
+    public async Task<IHtmlContent> RenderTableAsync(IHtmlHelper html, IPublishedElement element, string propertyAlias, string theme = "default")
+    {
+        var table = element.Value<WebwondersTableEditor>(propertyAlias);
+        if (table is null) return HtmlString.Empty;
+        return await RenderTableAsync(html, table, theme);
+    }
+
+    public async Task<IHtmlContent> RenderTableAsync(IHtmlHelper html, WebwondersTableEditor table, string theme = "default")
+    {
         var viewPath = $"~/Views/Partials/Tables/{theme}.cshtml";
         var viewResult = _viewEngine.GetView(null, viewPath, isMainPage: false);
 
         if (!viewResult.Success && !theme.Equals("default", StringComparison.OrdinalIgnoreCase))
         {
             viewResult = _viewEngine.GetView(null, "~/Views/Partials/Tables/default.cshtml", isMainPage: false);
-            
         }
         if (!viewResult.Success) return HtmlString.Empty;
-        
+
         return await RenderViewAsync(html, viewResult.View, table);
     }
 
