@@ -3,7 +3,7 @@ const e = [
     type: "propertyEditorUi",
     alias: "Webwonders.TableEditor.PropertyEditorUi",
     name: "Webwonders Table Editor Property Editor UI",
-    element: () => import("./table-editor.element-DaB1U8u9.js"),
+    element: () => import("./table-editor.element-CWSzL5hQ.js"),
     meta: {
       label: "Webwonders Table Editor",
       icon: "icon-table",

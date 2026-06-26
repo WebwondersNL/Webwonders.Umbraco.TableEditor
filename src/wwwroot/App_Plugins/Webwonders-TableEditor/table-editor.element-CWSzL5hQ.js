@@ -10,7 +10,7 @@ const $ = new v(
       size: "small"
     }
   }
-), C = new v(
+), x = new v(
   "Webwonders.TableEditor.CreateTableModal",
   {
     modal: {
@@ -18,10 +18,10 @@ const $ = new v(
     }
   }
 );
-var x = Object.defineProperty, E = Object.getOwnPropertyDescriptor, c = (e, t, i, a) => {
-  for (var o = a > 1 ? void 0 : a ? E(t, i) : t, r = e.length - 1, d; r >= 0; r--)
+var C = Object.defineProperty, R = Object.getOwnPropertyDescriptor, c = (e, t, i, a) => {
+  for (var o = a > 1 ? void 0 : a ? R(t, i) : t, r = e.length - 1, d; r >= 0; r--)
     (d = e[r]) && (o = (a ? d(t, i, o) : d(o)) || o);
-  return a && o && x(t, i, o), o;
+  return a && o && C(t, i, o), o;
 };
 function n() {
   return {
@@ -81,7 +81,7 @@ let u = class extends y(f) {
   }
   async _openCreateTableModal() {
     if (this.readonly) return;
-    const e = await h(this, C, {
+    const e = await h(this, x, {
       data: {
         headline: "Create table",
         rows: 3,
@@ -92,10 +92,10 @@ let u = class extends y(f) {
     e && this._createTable(e.rows, e.columns);
   }
   _createTable(e, t) {
-    const i = Array.from({ length: t }, () => ({ value: "" })), a = Array.from({ length: e }, () => ({
+    const i = Array.from({ length: t }, () => ({ value: "" })), a = Math.max(1, e - 1), o = Array.from({ length: a }, () => ({
       settings: {},
       cells: Array.from({ length: t }, () => ({ value: "" }))
-    })), o = {
+    })), r = {
       ...this.value ?? { settings: { columnHasHeader: !1, rowHasHeader: !1, highlightEmptyCells: !1 }, columns: [], rows: [] },
       settings: {
         columnHasHeader: !1,
@@ -103,9 +103,9 @@ let u = class extends y(f) {
         highlightEmptyCells: !1
       },
       columns: i,
-      rows: a
+      rows: o
     };
-    this.value = o, this._isEdit = !0, this.dispatchEvent(new p());
+    this.value = r, this._isEdit = !0, this.dispatchEvent(new p());
   }
   _insertRow(e) {
     if (this.readonly) return;
@@ -427,49 +427,6 @@ let u = class extends y(f) {
                                         compact>
                                             <uui-symbol-more></uui-symbol-more>
                                         </uui-button>
-                                        <uui-popover-container id="rowSettingsMenu${o}" placement="top-left" interaction="click">
-                                            <uui-box class="rowMenu" @click=${(r) => r.stopPropagation()}>
-                                                <div class="rowMenuItem">
-                                                    <span>Header row</span>
-                                                    <uui-toggle
-                                                            ?checked=${!!a.settings?.isHeaderRow}
-                                                            ?disabled=${this.readonly}
-                                                            @change=${(r) => this._updateRowSettings(o, { isHeaderRow: r.target.checked })}>
-                                                    </uui-toggle>
-                                                </div>
-
-                                                <div class="rowMenuItem">
-                                                    <span>Underlined</span>
-                                                    <uui-toggle
-                                                            ?checked=${!!a.settings?.isUnderlined}
-                                                            ?disabled=${this.readonly}
-                                                            @change=${(r) => this._updateRowSettings(o, { isUnderlined: r.target.checked })}>
-                                                    </uui-toggle>
-                                                </div>
-
-                                                <div class="rowMenuDivider"></div>
-                                                <div class="rowMenuActions">
-                                                    <uui-button
-                                                            label="Delete row"
-                                                            look="primary"
-                                                            color="danger"
-                                                            ?disabled=${this.readonly || e.rows.length <= 1}
-                                                            popovertargetaction="hide"
-                                                            @click=${(r) => {
-        r.stopPropagation(), this._closePopoverFromEvent(r), this._removeRow(o);
-      }}>
-                                                        <uui-icon name="icon-trash"></uui-icon>
-                                                    </uui-button>
-                                                    <uui-button
-                                                            look="primary"
-                                                            @click=${(r) => {
-        r.stopPropagation(), this._closePopoverFromEvent(r);
-      }}>
-                                                        Done
-                                                    </uui-button>
-                                                </div>
-                                            </uui-box>
-                                        </uui-popover-container>
                                         <uui-button
                                                 class="dragHandle"
                                                 label="Drag to reorder row"
@@ -482,6 +439,48 @@ let u = class extends y(f) {
                                             <uui-icon name="icon-navigation"></uui-icon>
                                         </uui-button>
                                     </uui-action-bar>
+                                    <uui-popover-container id="rowSettingsMenu${o}" placement="top-left" interaction="click">
+                                        <uui-box class="rowMenu" @click=${(r) => r.stopPropagation()}>
+                                            <div class="rowMenuItem">
+                                                <span>Header row</span>
+                                                <uui-toggle
+                                                        ?checked=${!!a.settings?.isHeaderRow}
+                                                        ?disabled=${this.readonly}
+                                                        @change=${(r) => this._updateRowSettings(o, { isHeaderRow: r.target.checked })}>
+                                                </uui-toggle>
+                                            </div>
+
+                                            <div class="rowMenuItem">
+                                                <span>Underlined</span>
+                                                <uui-toggle
+                                                        ?checked=${!!a.settings?.isUnderlined}
+                                                        ?disabled=${this.readonly}
+                                                        @change=${(r) => this._updateRowSettings(o, { isUnderlined: r.target.checked })}>
+                                                </uui-toggle>
+                                            </div>
+
+                                            <div class="rowMenuDivider"></div>
+                                            <div class="rowMenuActions">
+                                                <uui-button
+                                                        label="Delete row"
+                                                        look="primary"
+                                                        color="danger"
+                                                        ?disabled=${this.readonly || e.rows.length <= 1}
+                                                        @click=${(r) => {
+        r.stopPropagation(), this._closePopoverFromEvent(r), this._removeRow(o);
+      }}>
+                                                    <uui-icon name="icon-trash"></uui-icon>
+                                                </uui-button>
+                                                <uui-button
+                                                        look="primary"
+                                                        @click=${(r) => {
+        r.stopPropagation(), this._closePopoverFromEvent(r);
+      }}>
+                                                    Done
+                                                </uui-button>
+                                            </div>
+                                        </uui-box>
+                                    </uui-popover-container>
                                 </div>
                             </div>
                             
@@ -783,4 +782,4 @@ export {
   u as WebwondersTableEditorPropertyEditorUiElement,
   u as element
 };
-//# sourceMappingURL=table-editor.element-DaB1U8u9.js.map
+//# sourceMappingURL=table-editor.element-CWSzL5hQ.js.map

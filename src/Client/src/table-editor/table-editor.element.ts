@@ -139,7 +139,8 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
 
     private _createTable(rowCount: number, colCount: number) {
         const cols = Array.from({ length: colCount }, () => ({ value: "" }));
-        const rows = Array.from({ length: rowCount }, () => ({
+         const dataRows = Math.max(1, rowCount - 1);
+        const rows = Array.from({ length: dataRows }, () => ({
             settings: {},
             cells: Array.from({ length: colCount }, () => ({ value: "" })),
         }));
@@ -592,50 +593,6 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                         compact>
                                             <uui-symbol-more></uui-symbol-more>
                                         </uui-button>
-                                        <uui-popover-container id="rowSettingsMenu${ri}" placement="top-left" interaction="click">
-                                            <uui-box class="rowMenu" @click=${(ev: Event) => ev.stopPropagation()}>
-                                                <div class="rowMenuItem">
-                                                    <span>Header row</span>
-                                                    <uui-toggle
-                                                            ?checked=${!!r.settings?.isHeaderRow}
-                                                            ?disabled=${this.readonly}
-                                                            @change=${(e: Event) =>
-                                                                    this._updateRowSettings(ri, { isHeaderRow: (e.target as any).checked })}>
-                                                    </uui-toggle>
-                                                </div>
-
-                                                <div class="rowMenuItem">
-                                                    <span>Underlined</span>
-                                                    <uui-toggle
-                                                            ?checked=${!!r.settings?.isUnderlined}
-                                                            ?disabled=${this.readonly}
-                                                            @change=${(e: Event) =>
-                                                                    this._updateRowSettings(ri, { isUnderlined: (e.target as any).checked })}>
-                                                    </uui-toggle>
-                                                </div>
-
-                                                <div class="rowMenuDivider"></div>
-                                                <div class="rowMenuActions">
-                                                    <uui-button
-                                                            label="Delete row"
-                                                            look="primary"
-                                                            color="danger"
-                                                            ?disabled=${this.readonly || table.rows.length <= 1}
-                                                            popovertargetaction="hide"
-                                                            @click=${(ev: Event) => { ev.stopPropagation();this._closePopoverFromEvent(ev); this._removeRow(ri);}}>
-                                                        <uui-icon name="icon-trash"></uui-icon>
-                                                    </uui-button>
-                                                    <uui-button
-                                                            look="primary"
-                                                            @click=${(ev: Event) => {
-                                                                ev.stopPropagation();
-                                                                this._closePopoverFromEvent(ev);
-                                                            }}>
-                                                        Done
-                                                    </uui-button>
-                                                </div>
-                                            </uui-box>
-                                        </uui-popover-container>
                                         <uui-button
                                                 class="dragHandle"
                                                 label="Drag to reorder row"
@@ -648,6 +605,49 @@ export class WebwondersTableEditorPropertyEditorUiElement extends UmbElementMixi
                                             <uui-icon name="icon-navigation"></uui-icon>
                                         </uui-button>
                                     </uui-action-bar>
+                                    <uui-popover-container id="rowSettingsMenu${ri}" placement="top-left" interaction="click">
+                                        <uui-box class="rowMenu" @click=${(ev: Event) => ev.stopPropagation()}>
+                                            <div class="rowMenuItem">
+                                                <span>Header row</span>
+                                                <uui-toggle
+                                                        ?checked=${!!r.settings?.isHeaderRow}
+                                                        ?disabled=${this.readonly}
+                                                        @change=${(e: Event) =>
+                                                                this._updateRowSettings(ri, { isHeaderRow: (e.target as any).checked })}>
+                                                </uui-toggle>
+                                            </div>
+
+                                            <div class="rowMenuItem">
+                                                <span>Underlined</span>
+                                                <uui-toggle
+                                                        ?checked=${!!r.settings?.isUnderlined}
+                                                        ?disabled=${this.readonly}
+                                                        @change=${(e: Event) =>
+                                                                this._updateRowSettings(ri, { isUnderlined: (e.target as any).checked })}>
+                                                </uui-toggle>
+                                            </div>
+
+                                            <div class="rowMenuDivider"></div>
+                                            <div class="rowMenuActions">
+                                                <uui-button
+                                                        label="Delete row"
+                                                        look="primary"
+                                                        color="danger"
+                                                        ?disabled=${this.readonly || table.rows.length <= 1}
+                                                        @click=${(ev: Event) => { ev.stopPropagation(); this._closePopoverFromEvent(ev); this._removeRow(ri);}}>
+                                                    <uui-icon name="icon-trash"></uui-icon>
+                                                </uui-button>
+                                                <uui-button
+                                                        look="primary"
+                                                        @click=${(ev: Event) => {
+                                                            ev.stopPropagation();
+                                                            this._closePopoverFromEvent(ev);
+                                                        }}>
+                                                    Done
+                                                </uui-button>
+                                            </div>
+                                        </uui-box>
+                                    </uui-popover-container>
                                 </div>
                             </div>
                             
